@@ -2,9 +2,9 @@
 
 const bitcoin = require('bitcoin');
 let config = require('config');
-let spamchannel = config.get('sandboxchannel');
-let lbrycrdConfig = config.get('lbrycrd');
-const lbry = new bitcoin.Client(lbrycrdConfig);
+let spamchannel = config.get('botspamchannels');
+let walletConfig = config.get('dngr').config;
+const dngr = new bitcoin.Client(walletConfig);
 const helpmsg = {
   embed: {
     description:
@@ -22,15 +22,15 @@ const helpmsg = {
       '**Note**: Multi tips can contain any amount of users to tip.\n\n' +
       '__**FURTHER INFORMATION**__\n\n' +
       '**Help**: `!tip help` *Get this message.\n' +
-      'Read our [Tipbot FAQ](<https://lbry.com/faq/tipbot-discord>) for more details',
+      'Read our [Tipbot FAQ](<https://dngr.com/faq/tipbot-discord>) for more details',
     color: 1109218
   }
 };
 
-exports.commands = ['tip', 'multitip', 'roletip', 'tips'];
-exports.tip = {
+exports.commands = ['tipdngr', 'multitip', 'roletip', 'tips'];
+exports.tipdngr = {
   usage: '<subcommand>',
-  description: 'Tip a given user with an amount of LBC or perform wallet specific operations.',
+  description: 'Tip a given user with an amount of DNGR or perform wallet specific operations.',
   process: async function(bot, msg, suffix) {
     let tipper = msg.author.id.replace('!', ''),
       words = msg.content
@@ -44,16 +44,16 @@ exports.tip = {
       MultiorRole = false;
     switch (subcommand) {
       case 'help':
-        privateOrSandboxOnly(msg, channelwarning, doHelp, [helpmsg]);
+        privateorSpamChannel(msg, channelwarning, doHelp, [helpmsg]);
         break;
       case 'balance':
-        privateOrSandboxOnly(msg, channelwarning, doBalance, [tipper]);
+        privateorSpamChannel(msg, channelwarning, doBalance, [tipper]);
         break;
       case 'deposit':
-        privateOrSandboxOnly(msg, channelwarning, doDeposit, [tipper]);
+        privateorSpamChannel(msg, channelwarning, doDeposit, [tipper]);
         break;
       case 'withdraw':
-        privateOrSandboxOnly(msg, channelwarning, doWithdraw, [tipper, words, helpmsg]);
+        privateorSpamChannel(msg, channelwarning, doWithdraw, [tipper, words, helpmsg]);
         break;
       default:
         doTip(bot, msg, tipper, words, helpmsg, MultiorRole);
@@ -63,7 +63,7 @@ exports.tip = {
 
 exports.multitip = {
   usage: '<subcommand>',
-  description: 'Tip multiple users simultaneously for the same amount of LBC each.',
+  description: 'Tip multiple users simultaneously for the same amount of DNGR each.',
   process: async function(bot, msg, suffix) {
     let tipper = msg.author.id.replace('!', ''),
       words = msg.content
@@ -77,7 +77,7 @@ exports.multitip = {
       MultiorRole = true;
     switch (subcommand) {
       case 'help':
-        privateOrSandboxOnly(msg, channelwarning, doHelp, [helpmsg]);
+        privateorSpamChannel(msg, channelwarning, doHelp, [helpmsg]);
         break;
       default:
         doMultiTip(bot, msg, tipper, words, helpmsg, MultiorRole);
@@ -88,7 +88,7 @@ exports.multitip = {
 
 exports.roletip = {
   usage: '<subcommand>',
-  description: 'Tip all users in a specified role an amount of LBC.',
+  description: 'Tip all users in a specified role an amount of DNGR.',
   process: async function(bot, msg, suffix) {
     let tipper = msg.author.id.replace('!', ''),
       words = msg.content
@@ -102,7 +102,7 @@ exports.roletip = {
       MultiorRole = true;
     switch (subcommand) {
       case 'help':
-        privateOrSandboxOnly(msg, channelwarning, doHelp, [helpmsg]);
+        privateorSpamChannel(msg, channelwarning, doHelp, [helpmsg]);
         break;
       default:
         doRoleTip(bot, msg, tipper, words, helpmsg, MultiorRole);
@@ -119,7 +119,7 @@ exports.tips = {
   }
 };
 
-function privateOrSandboxOnly(message, wrongchannelmsg, fn, args) {
+function privateorSpamChannel(message, wrongchannelmsg, fn, args) {
   if (!inPrivateOrBotSandbox(message)) {
     message.reply(wrongchannelmsg);
     return;
@@ -132,11 +132,11 @@ function doHelp(message, helpmsg) {
 }
 
 function doBalance(message, tipper) {
-  lbry.getBalance(tipper, 1, function(err, balance) {
+  dngr.getBalance(tipper, 1, function(err, balance) {
     if (err) {
       message.reply('Error getting balance.').then(message => message.delete(5000));
     } else {
-      message.reply(`You have *${balance}* LBC`);
+      message.reply(`You have *${balance}* DNGR`);
     }
   });
 }
@@ -164,11 +164,11 @@ function doWithdraw(message, tipper, words, helpmsg) {
     return;
   }
 
-  lbry.sendFrom(tipper, address, amount, function(err, txId) {
+  dngr.sendFrom(tipper, address, amount, function(err, txId) {
     if (err) {
       return message.reply(err.message).then(message => message.delete(5000));
     }
-    message.reply(`${amount} LBC has been withdrawn to ${address}.
+    message.reply(`${amount} DNGR has been withdrawn to ${address}.
 ${txLink(txId)}`);
   });
 }
@@ -234,7 +234,7 @@ function doRoleTip(bot, message, tipper, words, helpmsg, MultiorRole) {
 
   let amount = getValidatedAmount(words[amountOffset]);
   if (amount === null) {
-    message.reply("I don't know how to tip that amount of LBC...").then(message => message.delete(10000));
+    message.reply("I don't know how to tip that amount of DNGR...").then(message => message.delete(10000));
     return;
   }
 
@@ -273,30 +273,30 @@ function findUserIDsAndAmount(message, words, prv) {
   return [idList, amount];
 }
 
-function sendLBC(bot, message, tipper, recipient, amount, privacyFlag, MultiorRole) {
+function sendDNGR(bot, message, tipper, recipient, amount, privacyFlag, MultiorRole) {
   getAddress(recipient.toString(), function(err, address) {
     if (err) {
       message.reply(err.message).then(message => message.delete(5000));
     } else {
-      lbry.sendFrom(tipper, address, Number(amount), 1, null, null, function(err, txId) {
+      dngr.sendFrom(tipper, address, Number(amount), 1, null, null, function(err, txId) {
         if (err) {
           message.reply(err.message).then(message => message.delete(5000));
         } else {
           let tx = txLink(txId);
           let msgtail = `
-DM me with \`!tips\` for all available commands or read our Tipbot FAQ <https://lbry.com/faq/tipbot-discord> for more details`;
+DM me with \`!tips\` for all available commands or read our Tipbot FAQ <https://dngr.com/faq/tipbot-discord> for more details`;
           if (privacyFlag) {
             let usr = message.guild.members.find('id', recipient).user;
-            let authmsg = `You have sent a private tip to @${usr.tag} with the amount of ${amount} LBC.
+            let authmsg = `You have sent a private tip to @${usr.tag} with the amount of ${amount} DNGR.
 ${tx}${msgtail}`;
             message.author.send(authmsg);
             if (message.author.id !== usr.id) {
-              let recipientmsg = `You have just been privately tipped ${amount} LBC by @${message.author.tag}.
+              let recipientmsg = `You have just been privately tipped ${amount} DNGR by @${message.author.tag}.
 ${tx}${msgtail}`;
               usr.send(recipientmsg);
             }
           } else {
-            let generalmsg = `just tipped <@${recipient}> ${amount} LBC.
+            let generalmsg = `just tipped <@${recipient}> ${amount} DNGR.
 ${tx}${msgtail}`;
             message.reply(generalmsg);
           }
@@ -306,13 +306,13 @@ ${tx}${msgtail}`;
   });
 }
 function getAddress(userId, cb) {
-  lbry.getAddressesByAccount(userId, function(err, addresses) {
+  dngr.getAddressesByAccount(userId, function(err, addresses) {
     if (err) {
       cb(err);
     } else if (addresses.length > 0) {
       cb(null, addresses[0]);
     } else {
-      lbry.getNewAddress(userId, function(err, address) {
+      dngr.getNewAddress(userId, function(err, address) {
         if (err) {
           cb(err);
         } else {
@@ -333,5 +333,5 @@ function getValidatedAmount(amount) {
 }
 
 function txLink(txId) {
-  return '<https://explorer.lbry.com/tx/' + txId + '>';
+    return '<http://dngrexplorer.cf/tx/' + txId + '>';
 }
