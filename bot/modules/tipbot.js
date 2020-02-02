@@ -3,8 +3,8 @@
 const bitcoin = require('bitcoin');
 let config = require('config');
 let spamchannel = config.get('botspamchannels');
-let walletConfig = config.get('dngr').config;
-const dngr = new bitcoin.Client(walletConfig);
+let dngrConfig = config.get('dngr');
+const dngr = new bitcoin.Client(dngrConfig);
 const helpmsg = {
   embed: {
     description:
@@ -27,8 +27,8 @@ const helpmsg = {
   }
 };
 
-exports.commands = ['tipdngr', 'multitip', 'roletip', 'tips'];
-exports.tipdngr = {
+exports.commands = ['tip', 'multitip', 'roletip', 'tips'];
+exports.tip = {
   usage: '<subcommand>',
   description: 'Tip a given user with an amount of DNGR or perform wallet specific operations.',
   process: async function(bot, msg, suffix) {
@@ -192,7 +192,7 @@ function doTip(bot, message, tipper, words, helpmsg, MultiorRole) {
   }
 
   if (message.mentions.users.first() && message.mentions.users.first().id) {
-    return sendLBC(bot, message, tipper, message.mentions.users.first().id.replace('!', ''), amount, prv, MultiorRole);
+    return sendDNGR(bot, message, tipper, message.mentions.users.first().id.replace('!', ''), amount, prv, MultiorRole);
   }
   message.reply('Sorry, I could not find the user you are trying to tip...');
 }
@@ -220,7 +220,7 @@ function doMultiTip(bot, message, tipper, words, helpmsg, MultiorRole) {
     return;
   }
   for (let i = 0; i < userIDs.length; i++) {
-    sendLBC(bot, message, tipper, userIDs[i].toString(), amount, prv, MultiorRole);
+    sendDNGR(bot, message, tipper, userIDs[i].toString(), amount, prv, MultiorRole);
   }
 }
 
@@ -244,7 +244,7 @@ function doRoleTip(bot, message, tipper, words, helpmsg, MultiorRole) {
     if (membersOfRole.length > 0) {
       let userIDs = membersOfRole.map(member => member.replace('!', ''));
       userIDs.forEach(u => {
-        sendLBC(bot, message, tipper, u, amount, isPrivateTip, MultiorRole);
+        sendDNGR(bot, message, tipper, u, amount, isPrivateTip, MultiorRole);
       });
     } else {
       return message.reply('Sorry, I could not find any users to tip in that role...').then(message => message.delete(10000));
@@ -328,7 +328,7 @@ function inPrivateOrBotSandbox(msg) {
 }
 
 function getValidatedAmount(amount) {
-  amount = amount.toLowerCase().replace('lbc', '');
+  amount = amount.toLowerCase().replace('dngr', '');
   return amount.match(/^[0-9]+(\.[0-9]+)?$/) ? amount : null;
 }
 

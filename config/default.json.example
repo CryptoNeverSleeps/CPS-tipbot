@@ -6,8 +6,8 @@
   },
   "dngr": {
     "port": 49003,
-    "user": "lbry",
-    "pass": "lbry"
+    "user": "dngr",
+    "pass": "dngr"
   },
-  "sandboxchannel": "#671165066862788622"
+  "botspamchannels": "671165066862788622"
 }
