@@ -9,20 +9,19 @@ const helpmsg = {
   embed: {
     description:
       '__**TIPS**__\n\n' +
-      '**Balance**: `!tip balance`\n' +
-      '**Deposit Address**: `!tip deposit`\n' +
-      '**Withdraw**: `!tip withdraw <address> <amount>`\n' +
-      '**Private Tip**: `!tip private <user> <amount>`\n\n' +
+      '**Balance**: `$tip balance`\n' +
+      '**Deposit Address**: `$tip deposit`\n' +
+      '**Withdraw**: `$tip withdraw <address> <amount>`\n' +
+      '**Private Tip**: `$tip private <user> <amount>`\n\n' +
       '__**ROLE TIPS**__ Use this to tip everyone in a role.\n\n' +
-      '**Role Tip**: `!roletip <role> <amount>`\n' +
-      '**Private Role Tip**: `!privatetip <role> <amount>`\n\n' +
+      '**Role Tip**: `$roletip <role> <amount>`\n' +
+      '**Private Role Tip**: `$privatetip <role> <amount>`\n\n' +
       '__**MULTI TIPS**__ Use this to tip multiple people at once.\n\n' +
-      '**Multi Tip**: `!multitip <user> <user> <amount>`\n' +
-      '**Private Multi Tip** `!multitip private <user> <user> <amount>`\n' +
+      '**Multi Tip**: `$multitip <user> <user> <amount>`\n' +
+      '**Private Multi Tip** `$multitip private <user> <user> <amount>`\n' +
       '**Note**: Multi tips can contain any amount of users to tip.\n\n' +
       '__**FURTHER INFORMATION**__\n\n' +
-      '**Help**: `!tip help` *Get this message.\n' +
-      'Read our [Tipbot FAQ](<https://dngr.com/faq/tipbot-discord>) for more details',
+      '**Help**: `$tip help` *Get this message.\n',
     color: 1109218
   }
 };
@@ -134,9 +133,26 @@ function doHelp(message, helpmsg) {
 function doBalance(message, tipper) {
   dngr.getBalance(tipper, 1, function(err, balance) {
     if (err) {
-      message.reply('Error getting balance.').then(message => message.delete(5000));
+        message.reply('Error getting DangerCoin (DNGR) balance.').then(message => message.delete(10000));
     } else {
-      message.reply(`You have *${balance}* DNGR`);
+        message.channel.send({
+            embed: {
+                description: '**:bank::money_with_wings::moneybag:DangerCoin (DNGR) Balance!:moneybag::money_with_wings::bank:**',
+                color: 1363892,
+                fields: [
+                    {
+                        name: '__User__',
+                        value: '<@' + message.author.id + '>',
+                        inline: false
+                    },
+                    {
+                        name: '__Balance__',
+                        value: '**' + balance.toString() + '**',
+                        inline: false
+                    }
+                ]
+            }
+        });
     }
   });
 }
@@ -144,57 +160,131 @@ function doBalance(message, tipper) {
 function doDeposit(message, tipper) {
   getAddress(tipper, function(err, address) {
     if (err) {
-      message.reply('Error getting your deposit address.').then(message => message.delete(5000));
+        message.reply('Error getting your DangerCoin (DNGR) deposit address.').then(message => message.delete(10000));
     } else {
-      message.reply(`Your address is ${address}`);
+        message.channel.send({
+            embed: {
+                description: '**:bank::card_index::moneybag:DangerCoin (DNGR) Address!:moneybag::card_index::bank:**',
+                color: 1363892,
+                fields: [
+                    {
+                        name: '__User__',
+                        value: '<@' + message.author.id + '>',
+                        inline: false
+                    },
+                    {
+                        name: '__Address__',
+                        value: '**' + address + '**',
+                        inline: false
+                    }
+                ]
+            }
+        });
     }
   });
 }
 
 function doWithdraw(message, tipper, words, helpmsg) {
-  if (words.length < 4) {
-    return doHelp(message, helpmsg);
-  }
-
-  let address = words[2],
-    amount = getValidatedAmount(words[3]);
-
-  if (amount === null) {
-    message.reply('Invalid amount of credits specified... Cannot withdraw credits.').then(message => message.delete(5000));
-    return;
-  }
-
-  dngr.sendFrom(tipper, address, amount, function(err, txId) {
-    if (err) {
-      return message.reply(err.message).then(message => message.delete(5000));
+    if (words.length < 4) {
+        doHelp(message, helpmsg);
+        return;
     }
-    message.reply(`${amount} DNGR has been withdrawn to ${address}.
-${txLink(txId)}`);
-  });
+
+    var address = words[2],
+        amount = getValidatedAmount(words[3]);
+
+    if (amount === null) {
+        message.reply("I don't know how to withdraw that much DangerCoin (DNGR)...").then(message => message.delete(10000));
+        return;
+    }
+
+    dngr.getBalance(tipper, 1, function (err, balance) {
+        if (err) {
+            message.reply('Error getting DangerCoin (DNGR) balance.').then(message => message.delete(10000));
+        } else {
+            if (Number(amount) > Number(balance)) {
+                message.channel.send('Please leave some DangerCoin (DNGR) for transaction fees!');
+                return;
+            }
+            dngr.sendFrom(tipper, address, Number(amount), function (err, txId) {
+                if (err) {
+                    message.reply(err.message).then(message => message.delete(10000));
+                } else {
+                    message.channel.send({
+                        embed: {
+                            description: '**:outbox_tray::money_with_wings::moneybag:DangerCoin (DNGR) Transaction Completed!:moneybag::money_with_wings::outbox_tray:**',
+                            color: 1363892,
+                            fields: [
+                                {
+                                    name: '__Sender__',
+                                    value: '<@' + message.author.id + '>',
+                                    inline: true
+                                },
+                                {
+                                    name: '__Receiver__',
+                                    value: '**' + address + '**\n' + addyLink(address),
+                                    inline: true
+                                },
+                                {
+                                    name: '__txid__',
+                                    value: '**' + txId + '**\n' + txLink(txId),
+                                    inline: false
+                                },
+                                {
+                                    name: '__Amount__',
+                                    value: '**' + amount.toString() + '**',
+                                    inline: true
+                                }
+                            ]
+                        }
+                    });
+                }
+            });
+        }
+    });
 }
 
-function doTip(bot, message, tipper, words, helpmsg, MultiorRole) {
-  if (words.length < 3 || !words) {
-    return doHelp(message, helpmsg);
-  }
+function doTip(bot, message, tipper, words, helpmsg) {
+    if (words.length < 3 || !words) {
+        doHelp(message, helpmsg);
+        return;
+    }
+    var prv = false;
+    var amountOffset = 2;
+    if (words.length >= 4 && words[1] === 'private') {
+        prv = true;
+        amountOffset = 3;
+    }
 
-  let prv = false;
-  let amountOffset = 2;
-  if (words.length >= 4 && words[1] === 'private') {
-    prv = true;
-    amountOffset = 3;
-  }
+    let amount = getValidatedAmount(words[amountOffset]);
 
-  let amount = getValidatedAmount(words[amountOffset]);
+    if (amount === null) {
+        message.reply("I don't know how to tip that much DangerCoin (DNGR)...").then(message => message.delete(10000));
+        return;
+    }
 
-  if (amount === null) {
-    return message.reply('Invalid amount of credits specified...').then(message => message.delete(5000));
-  }
+    dngr.getBalance(tipper, 1, function (err, balance) {
+        if (err) {
+            message.reply('Error getting DangerCoin (DNGR) balance.').then(message => message.delete(10000));
+        } else {
+            if (Number(amount) > Number(balance)) {
+                message.channel.send('Please leave some DangerCoin (DNGR) for transaction fees!');
+                return;
+            }
 
-  if (message.mentions.users.first() && message.mentions.users.first().id) {
-    return sendDNGR(bot, message, tipper, message.mentions.users.first().id.replace('!', ''), amount, prv, MultiorRole);
-  }
-  message.reply('Sorry, I could not find the user you are trying to tip...');
+            if (!message.mentions.users.first()) {
+                message
+                    .reply('Sorry, I could not find a user in your tip...')
+                    .then(message => message.delete(10000));
+                return;
+            }
+            if (message.mentions.users.first().id) {
+                sendDNGR(bot, message, tipper, message.mentions.users.first().id.replace('$', ''), amount, prv);
+            } else {
+                message.reply('Sorry, I could not find a user in your tip...').then(message => message.delete(10000));
+            }
+        }
+    });
 }
 
 function doMultiTip(bot, message, tipper, words, helpmsg, MultiorRole) {
@@ -273,38 +363,115 @@ function findUserIDsAndAmount(message, words, prv) {
   return [idList, amount];
 }
 
-function sendDNGR(bot, message, tipper, recipient, amount, privacyFlag, MultiorRole) {
-  getAddress(recipient.toString(), function(err, address) {
-    if (err) {
-      message.reply(err.message).then(message => message.delete(5000));
-    } else {
-      dngr.sendFrom(tipper, address, Number(amount), 1, null, null, function(err, txId) {
+function sendDNGR(bot, message, tipper, recipient, amount, privacyFlag) {
+    getAddress(recipient.toString(), function (err, address) {
         if (err) {
-          message.reply(err.message).then(message => message.delete(5000));
+            message.reply(err.message).then(message => message.delete(10000));
         } else {
-          let tx = txLink(txId);
-          let msgtail = `
-DM me with \`!tips\` for all available commands or read our Tipbot FAQ <https://dngr.com/faq/tipbot-discord> for more details`;
-          if (privacyFlag) {
-            let usr = message.guild.members.find('id', recipient).user;
-            let authmsg = `You have sent a private tip to @${usr.tag} with the amount of ${amount} DNGR.
-${tx}${msgtail}`;
-            message.author.send(authmsg);
-            if (message.author.id !== usr.id) {
-              let recipientmsg = `You have just been privately tipped ${amount} DNGR by @${message.author.tag}.
-${tx}${msgtail}`;
-              usr.send(recipientmsg);
-            }
-          } else {
-            let generalmsg = `just tipped <@${recipient}> ${amount} DNGR.
-${tx}${msgtail}`;
-            message.reply(generalmsg);
-          }
+            dngr.sendFrom(tipper, address, Number(amount), 1, null, null, function (err, txId) {
+                if (err) {
+                    message.reply(err.message).then(message => message.delete(10000));
+                } else {
+                    if (privacyFlag) {
+                        let userProfile = message.guild.members.find('id', recipient);
+                        userProfile.user.send({
+                            embed: {
+                                description: '**:money_with_wings::moneybag:DangerCoin (DNGR) Transaction Completed!:moneybag::money_with_wings:**',
+                                color: 1363892,
+                                fields: [
+                                    {
+                                        name: '__Sender__',
+                                        value: 'Private Tipper',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__Receiver__',
+                                        value: '<@' + recipient + '>',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__txid__',
+                                        value: '**' + txId + '**\n' + txLink(txId),
+                                        inline: false
+                                    },
+                                    {
+                                        name: '__Amount__',
+                                        value: '**' + amount.toString() + '**',
+                                        inline: true
+                                    }
+                                ]
+                            }
+                        });
+                        message.author.send({
+                            embed: {
+                                description: '**:money_with_wings::moneybag:DangerCoin (DNGR) Transaction Completed!:moneybag::money_with_wings:**',
+                                color: 1363892,
+                                fields: [
+                                    {
+                                        name: '__Sender__',
+                                        value: '<@' + message.author.id + '>',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__Receiver__',
+                                        value: '<@' + recipient + '>',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__txid__',
+                                        value: '**' + txId + '**\n' + txLink(txId),
+                                        inline: false
+                                    },
+                                    {
+                                        name: '__Amount__',
+                                        value: '**' + amount.toString() + '**',
+                                        inline: true
+                                    }
+
+                                ]
+                            }
+                        });
+                        if (
+                            message.content.startsWith('$tip private ')
+                        ) {
+                            message.delete(1000); //Supposed to delete message
+                        }
+                    } else {
+                        message.channel.send({
+                            embed: {
+                                description: '**:money_with_wings::moneybag:DangerCoin (DNGR) Transaction Completed!:moneybag::money_with_wings:**',
+                                color: 1363892,
+                                fields: [
+                                    {
+                                        name: '__Sender__',
+                                        value: '<@' + message.author.id + '>',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__Receiver__',
+                                        value: '<@' + recipient + '>',
+                                        inline: true
+                                    },
+                                    {
+                                        name: '__txid__',
+                                        value: '**' + txId + '**\n' + txLink(txId),
+                                        inline: false
+                                    },
+                                    {
+                                        name: '__Amount__',
+                                        value: '**' + amount.toString() + '**',
+                                        inline: true
+                                    }
+                                ]
+                            }
+                        });
+                    }
+                }
+            });
         }
-      });
-    }
-  });
+    });
 }
+
 function getAddress(userId, cb) {
   dngr.getAddressesByAccount(userId, function(err, addresses) {
     if (err) {
@@ -334,4 +501,8 @@ function getValidatedAmount(amount) {
 
 function txLink(txId) {
     return '<http://dngrexplorer.cf/tx/' + txId + '>';
+}
+
+function addyLink(address) {
+    return 'http://dngrexplorer.cf/address/' + address;
 }

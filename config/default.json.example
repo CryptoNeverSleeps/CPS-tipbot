@@ -5,9 +5,9 @@
     "debug": false
   },
   "dngr": {
-    "port": 49003,
-    "user": "dngr",
-    "pass": "dngr"
+      "port": 49003,
+      "user": "dngr",
+      "pass": "dngr"
   },
-  "botspamchannels": "671165066862788622"
-}
+    "botspamchannels": "671165066862788622"
+  }
