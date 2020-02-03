@@ -67,3 +67,13 @@ typings/
 
 # User-specific stuff:
 .idea
+
+.vs/CPS-tipbot/config/applicationhost.config
+
+.vs/CPS-tipbot/v16/.suo
+
+.vs/ProjectSettings.json
+
+.vs/slnx.sqlite
+
+.vs/VSWorkspaceState.json

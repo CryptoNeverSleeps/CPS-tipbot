@@ -9,25 +9,25 @@ const helpmsg = {
   embed: {
     description:
       '__**TIPS**__\n\n' +
-      '**Balance**: `$tip balance`\n' +
-      '**Deposit Address**: `$tip deposit`\n' +
-      '**Withdraw**: `$tip withdraw <address> <amount>`\n' +
-      '**Private Tip**: `$tip private <user> <amount>`\n\n' +
+      '**Balance**: `$tipdngr balance`\n' +
+      '**Deposit Address**: `$tipdngr deposit`\n' +
+      '**Withdraw**: `$tipdngr withdraw <address> <amount>`\n' +
+      '**Private Tip**: `$tipdngr private <user> <amount>`\n\n' +
       '__**ROLE TIPS**__ Use this to tip everyone in a role.\n\n' +
-      '**Role Tip**: `$roletip <role> <amount>`\n' +
-      '**Private Role Tip**: `$privatetip <role> <amount>`\n\n' +
-      '__**MULTI TIPS**__ Use this to tip multiple people at once.\n\n' +
-      '**Multi Tip**: `$multitip <user> <user> <amount>`\n' +
-      '**Private Multi Tip** `$multitip private <user> <user> <amount>`\n' +
-      '**Note**: Multi tips can contain any amount of users to tip.\n\n' +
+      '**Role Tip**: `$roletipdngr <role> <amount>`\n' +
+      '**Private Role Tip**: `$privatetipdngr <role> <amount>`\n\n' +
+      '__**MULTI TIPS**__ Use this to tipdngr multiple people at once.\n\n' +
+      '**Multi Tip**: `$multitipdngr <user> <user> <amount>`\n' +
+      '**Private Multi Tip** `$multitipdngr private <user> <user> <amount>`\n' +
+      '**Note**: Multi tipdngrs can contain any amount of users to tipdngr.\n\n' +
       '__**FURTHER INFORMATION**__\n\n' +
-      '**Help**: `$tip help` *Get this message.\n',
+      '**Help**: `$tipdngr help` *Get this message.\n',
     color: 1109218
   }
 };
 
-exports.commands = ['tip', 'multitip', 'roletip', 'tips'];
-exports.tip = {
+exports.commands = ['tipdngr', 'multitipdngr', 'roletipdngr', 'tips'];
+exports.tipdngr = {
   usage: '<subcommand>',
   description: 'Tip a given user with an amount of DNGR or perform wallet specific operations.',
   process: async function(bot, msg, suffix) {
@@ -60,7 +60,7 @@ exports.tip = {
   }
 };
 
-exports.multitip = {
+exports.multitipdngr = {
   usage: '<subcommand>',
   description: 'Tip multiple users simultaneously for the same amount of DNGR each.',
   process: async function(bot, msg, suffix) {
@@ -85,7 +85,7 @@ exports.multitip = {
   }
 };
 
-exports.roletip = {
+exports.roletipdngr = {
   usage: '<subcommand>',
   description: 'Tip all users in a specified role an amount of DNGR.',
   process: async function(bot, msg, suffix) {
@@ -432,7 +432,7 @@ function sendDNGR(bot, message, tipper, recipient, amount, privacyFlag) {
                             }
                         });
                         if (
-                            message.content.startsWith('$tip private ')
+                            message.content.startsWith('$tipdngr private ')
                         ) {
                             message.delete(1000); //Supposed to delete message
                         }
